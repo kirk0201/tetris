@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      #canvas {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgb(236, 231, 186);
+        border: 1px solid red;
+        background-color: cadetblue;
+      }
+      .container {
+        display: grid;
+        grid-template-columns: 300px 150px;
+        gap: 10px;
+      }
+      .container .right_panel {
+        background-color: aqua;
+        font-weight: 700;
+        padding: 0 10px;
+      }
+      .container .right_panel .title {
+        text-align: center;
+        font-size: 50px;
+      }
+      .container .right_panel .score {
+        padding-bottom: 20px;
+      }
+    </style>
+    <title>Tetris</title>
+  </head>
+  <body>
+    <div class="container">
+      <canvas id="canvas"></canvas>
+      <div class="right_panel">
+        <div class="title">Tetris</div>
+        <div class="score">Score : <span class="score_number">0</span></div>
+        <canvas id="newblock"></canvas>
+      </div>
+    </div>
+    <script>
+      const canvas = document.querySelector("#canvas");
+      const context = canvas.getContext("2d");
+
+      const newBlock = document.querySelector("#newblock");
+      const newContext = newBlock.getContext("2d");
+
+      const COLS = 10;
+      const ROWS = 20;
+      const BLOCKS = 30;
+
+      const scale = 20;
+      const tWidth = canvas.width / scale;
+      const tHeight = canvas.height / scale;
+      let ground = [];
+      const BORDER = 5;
+      let key;
+      let initialScore = 0;
+      // Playground
+      context.canvas.width = COLS * BLOCKS;
+      context.canvas.height = ROWS * BLOCKS;
+
+      context.scale(scale, scale);
+      newContext.scale(scale, scale);
+
+      // 테트리스 랜덤 블럭
+      function randomBlockShape() {
+        const object = [
+          {
+            color: "blue",
+            block: [
+              [8, 8],
+              [8, 8],
+            ],
+          },
+          {
+            color: "red",
+            block: [
+              [2, 2, 0],
+              [0, 2, 2],
+              [0, 0, 0],
+            ],
+          },
+          {
+            color: "yellow",
+            block: [
+              [0, 3, 3],
+              [3, 3, 0],
+              [0, 0, 0],
+            ],
+          },
+          {
+            color: "green",
+            block: [
+              [0, 4, 0],
+              [4, 4, 4],
+              [0, 0, 0],
+            ],
+          },
+          {
+            color: "purple",
+            block: [
+              [5, 0, 0],
+              [5, 5, 5],
+              [0, 0, 0],
+            ],
+          },
+          {
+            color: "brown",
+            block: [
+              [0, 0, 6],
+              [6, 6, 6],
+              [0, 0, 0],
+            ],
+          },
+          {
+            color: "cadetblue",
+            block: [
+              [0, 7, 0, 0],
+              [0, 7, 0, 0],
+              [0, 7, 0, 0],
+              [0, 7, 0, 0],
+            ],
+          },
+        ];
+        const randomIndex = Math.floor(Math.random() * object.length);
+        // const randomIndex = Math.floor(0 * blocks.length);
+        return object[randomIndex];
+      }
+      console.log(randomBlockShape());
+
+      const player = {
+        x: 6,
+        y: 0,
+        object: randomBlockShape(),
+      };
+      const area = {};
+      // 블럭그리기
+      function drawMatrix(object, x, y) {
+        for (let i = 0; i < object.block.length; i++) {
+          for (let j = 0; j < object.block[i].length; j++) {
+            if (object.block[i][j]) {
+              // console.log("matrix", matrix);
+              // console.log("i", matrix[i][j]);
+              // context.beginPath();
+              context.fillStyle = object.color;
+              context.fillRect(x + j, y + i, 1, 1);
+            }
+          }
+        }
+      }
+
+      // 배경
+      function drawArena(object) {
+        for (let i = 1; i < ground.length - 1; i++) {
+          for (let j = 1; j < ground[i].length - 1; j++) {
+            if (ground[i][j] !== 0 && ground[i][j] !== 1) {
+              // console.log("object", object);
+              // console.log("object[i][j]", object[i][j]);
+              // console.log("ground[i]", ground[i]);
+              // console.log("ground[j]", ground[j]);
+              // console.log("ground[i][j]", ground[i][j]);
+              context.fillStyle = object.color;
+              context.fillRect(j - 1, i - 1, 1, 1);
+              // switch (ground[i][j]) {
+              //   case 8:
+              //     context.fillStyle = "blue";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 2:
+              //     context.fillStyle = "red";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 3:
+              //     context.fillStyle = "yellow";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 4:
+              //     context.fillStyle = "green";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 5:
+              //     context.fillStyle = "purple";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 6:
+              //     context.fillStyle = "brown";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              //   case 7:
+              //     context.fillStyle = "cadetblue";
+              //     context.fillRect(j - 1, i - 1, 1, 1);
+              // }
+            }
+          }
+        }
+      }
+
+      // 외곽을 1로 둘러쌈
+      function playground() {
+        let tHeight = canvas.height / scale;
+        let tWidth = canvas.width / scale;
+
+        const side = new Array(tWidth + 2).fill(1);
+        ground.push(side);
+        for (let i = 0; i < tHeight; i++) {
+          let row = new Array(tWidth).fill(0);
+          row.push(1);
+          row.unshift(1);
+
+          ground.push(row);
+        }
+        ground.push(side);
+      }
+
+      // 충돌박스
+      function boxColider(player, ground) {
+        for (let i = 0; i < player.object.block.length; i++) {
+          for (let j = 0; j < player.object.block[i].length; j++) {
+            if (
+              player.object.block[i][j] &&
+              ground[player.y + i + 1][player.x + j + 1]
+            ) {
+              return 1;
+            }
+          }
+        }
+        return 0;
+      }
+
+      // 회전을 위해서 (x, y) => (y, size - x) size = length -1
+      function rotate(object) {
+        let rotateBlock = [];
+        object.block.forEach(() => {
+          rotateBlock.push([]);
+        });
+        for (let i = 0; i < object.block.length; i++) {
+          for (let j = 0; j < object.block[i].length; j++) {
+            rotateBlock[j][object.block.length - 1 - i] = object.block[i][j];
+          }
+        }
+        // console.log(rotateBlock);
+        return rotateBlock;
+      }
+      // 충돌박스 회전할때
+      function nonRotate(object) {
+        let rotateBlock = [];
+        object.block.forEach(() => {
+          rotateBlock.push([]);
+        });
+
+        for (let i = 0; i < object.block.length; i++) {
+          for (let j = 0; j < object.block[i].length; j++) {
+            rotateBlock[j][i] = object.block[i][j];
+          }
+        }
+        // console.log(rotateBlock);
+        return rotateBlock;
+      }
+
+      let sec = 1000;
+      let count = 0,
+        speed = 30;
+
+      let newShape;
+
+      function draw() {
+        context.fillStyle = "#000";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawArena(player.object);
+        drawMatrix(player.object, player.x, player.y);
+      }
+
+      function update(time = 0) {
+        let animate = requestAnimationFrame(update);
+        let stop = cancelAnimationFrame(update);
+
+        count += speed;
+
+        // ground.filter((n) => {
+        //   if (n.length !== 17) {
+        //     console.log("버그발생");
+        //   }
+        // });
+        if (
+          ground[1]
+            .slice(1)
+            .slice(0, -1)
+            .some((cols) => cols !== 0)
+        ) {
+          return stop;
+        }
+        if (count >= sec) {
+          player.y++;
+          count = 0;
+        }
+        if (key === "start") {
+          newShape = randomBlockShape();
+          key = "";
+        }
+        draw();
+
+        preView(newShape);
+
+        if (boxColider(player, ground)) {
+          key = "start";
+          addBlock(player.object, player.x, player.y - 1);
+          player.object = newShape;
+          deleteBlock();
+          if (gameover()) {
+            return 1;
+          }
+          player.y = 0;
+          player.x = 6;
+        }
+        // context.beginPath();
+        // context.fillStyle = "#000";
+        // context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // context.strokeStyle = "blue";
+      }
+
+      // 메인함수
+      function main() {
+        window.addEventListener("keydown", keyHandler);
+        playground();
+        key = "start";
+        update();
+      }
+
+      // 미리보기
+      function preView(object, x, y) {
+        newContext.beginPath();
+        newContext.fillStyle = "aqua";
+        newContext.clearRect(
+          0,
+          0,
+          newContext.canvas.width,
+          newContext.canvas.height
+        );
+        for (let i = 0; i < object.block.length; i++) {
+          for (let j = 0; j < object.block[i].length; j++) {
+            if (object.block[i][j]) {
+              // newContext.beginPath();
+              newContext.fillStyle = object.color;
+              newContext.fillRect(i, j, 1, 1);
+            }
+          }
+        }
+      }
+      function addBlock(object, x, y) {
+        // console.log("block", block);
+        for (let i = 0; i < object.block.length; i++) {
+          for (let j = 0; j < object.block[i].length; j++) {
+            // console.log("y+i+1", y + i + 1);
+            // console.log("x+j+1", x + j + 1);
+            if (object.block[i][j] > 0) {
+              ground[y + i + 1][x + j + 1] = object.block[i][j];
+            }
+          }
+        }
+        // console.log(ground);
+      }
+
+      // 게임 끝
+      function gameover() {
+        if (
+          ground[1]
+            .slice(1)
+            .slice(0, -1)
+            .some((cols) => cols !== 0)
+        ) {
+          // context.clearRect(0, 0, 0, 0);
+          context.beginPath();
+          context.fillStyle = "blue";
+          context.fillRect(300, 0, 1, 1);
+          context.font = "1px Arial";
+          context.fillStyle = "red";
+          context.fillText("Game Over", 20, 40);
+          alert("게임오버 새로고침 해주세요");
+        }
+      }
+
+      // 블럭삭제
+      function deleteBlock() {
+        // 외곽을 제외한 playground
+        let tWidth = canvas.width / scale;
+        let n = ground.length - 2;
+        let lastBlock = ground.filter((rows) => rows.some((n) => n === 0));
+        let deleteBlock = ground.filter((rows) => rows.every((n) => n !== 0));
+        let deleteNumber = deleteBlock.length - 2;
+        // console.log("deleteNumber", deleteBlock.length - 2);
+        // console.log("deleteBlock", deleteBlock);
+        if (deleteNumber > 0) {
+          // ground.length - 1 => playground 제일 바닥
+          ground.splice(ground.length - 1 - deleteNumber, deleteNumber);
+          for (let i = 0; i < deleteNumber; i++) {
+            initialScore += 10;
+            const score = document.querySelector(".score_number");
+            score.innerText = `${initialScore}`;
+            let row = new Array(tWidth).fill(0);
+            row.push(1);
+            row.unshift(1);
+            ground.splice(1, 0, row);
+          }
+        }
+        return ground;
+        // for (let i = 1; i < ground.length - 1; i++) {
+        // }
+
+        // console.log("ground", ground);
+        // ground.forEach((row) => {
+        //   console.log(row.every((n) => n !== 0));
+        //   if (row.every((n) => n !== 0)) {
+        //     console.log("꽉찼다!");
+        //   }
+        // });
+      }
+
+      function keyHandler(e) {
+        // console.log(e);
+        const inputKey = e.keyCode;
+
+        const KEY = {
+          LEFT: 37,
+          UP: 38,
+          RIGHT: 39,
+          DOWN: 40,
+          SPACE: 32,
+        };
+
+        switch (inputKey) {
+          case KEY.SPACE:
+            // for (let i = 0; i < ground.length; i++) {
+            //   for (let j = 0; j < ground[i].length; j++) {
+            //     ground[]
+            //   }
+            // }
+            break;
+          case KEY.UP:
+            player.object.block = rotate(player.object);
+            if (boxColider(player, ground)) {
+              player.object.block = nonRotate(player.object);
+            }
+            break;
+          case KEY.DOWN:
+            player.y++;
+
+            break;
+          case KEY.LEFT:
+            player.x--;
+            if (boxColider(player, ground)) {
+              player.x++;
+            }
+            break;
+          case KEY.RIGHT:
+            player.x++;
+            if (boxColider(player, ground)) {
+              player.x--;
+            }
+            break;
+        }
+      }
+
+      main();
+    </script>
+  </body>
+</html>
