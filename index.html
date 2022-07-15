@@ -5,13 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+      body {
+        display: flex;
+        justify-content: center;
+      }
+
       #canvas {
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgb(236, 231, 186);
-        border: 1px solid red;
-        background-color: cadetblue;
+        border: 1px solid red; /* background-color: cadetblue; */
       }
       .container {
         display: grid;
@@ -19,27 +19,102 @@
         gap: 10px;
       }
       .container .right_panel {
-        background-color: aqua;
         font-weight: 700;
         padding: 0 10px;
+        background-color: lightsteelblue;
+        border: 1px solid red;
       }
       .container .right_panel .title {
         text-align: center;
-        font-size: 50px;
+        font-size: 40px;
+        padding-bottom: 20px;
+        color: darkslateblue;
+      }
+      .container .right_panel .score_container {
+        border: 2px solid rgb(93, 89, 89);
+        text-align: center;
+        border-radius: 5px;
+        overflow: hidden;
+
+        /* display: flex;
+        flex-direction: column;
+        align-items: center; */
       }
       .container .right_panel .score {
-        padding-bottom: 20px;
+        font-size: 24px;
+        color: white;
+        background-color: gray;
+
+        border-bottom: 2px solid rgb(93, 89, 89);
+      }
+      .container .right_panel .score_container .score_number {
+        font-size: 30px;
+        color: lightcoral;
+        background-color: white;
+      }
+      .button_container {
+        display: flex;
+        gap: 10px;
+      }
+      .button_area {
+        margin-top: 10px;
+        padding: 10px 5px;
+        width: 290px;
+        border: 1px solid red;
+        display: flex;
+        justify-content: space-around;
+      }
+      .button_area > button {
+        padding: 10px 10px;
+        font-weight: 700;
+        border: 1px solid gray;
+        border-radius: 5px;
+      }
+      .button_area > button:hover {
+        background-color: darkslategray;
+        color: white;
+      }
+      .space_area {
+        margin-top: 10px;
+        width: 135px;
+        padding: 10px 5px;
+        border: 1px solid red;
+        display: flex;
+        justify-content: center;
+      }
+      .space_area > button {
+        border: 1px solid gray;
+        border-radius: 5px;
+        font-weight: 700;
+      }
+      .space_area > button:hover {
+        background-color: darkslategray;
+        color: white;
       }
     </style>
-    <title>Tetris</title>
+    <title>TETRIS</title>
   </head>
   <body>
-    <div class="container">
-      <canvas id="canvas"></canvas>
-      <div class="right_panel">
-        <div class="title">Tetris</div>
-        <div class="score">Score : <span class="score_number">0</span></div>
-        <canvas id="newblock"></canvas>
+    <div class="wrap">
+      <div class="container">
+        <canvas id="canvas"></canvas>
+        <div class="right_panel">
+          <div class="title">TETRIS</div>
+          <canvas id="newblock"></canvas>
+          <div class="score_container">
+            <div class="score">Score</div>
+            <div class="score_number">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="button_container">
+        <div class="button_area">
+          <button class="upBtn">Up</button>
+          <button class="downBtn">Down</button>
+          <button class="leftBtn">Left</button>
+          <button class="rightBtn">Right</button>
+        </div>
+        <div class="space_area"><button class="spaceBtn">Space</button></div>
       </div>
     </div>
     <script>
@@ -56,10 +131,13 @@
       const scale = 20;
       const tWidth = canvas.width / scale;
       const tHeight = canvas.height / scale;
+
       let ground = [];
+      let colorGround = [];
       const BORDER = 5;
       let key;
       let initialScore = 0;
+
       // Playground
       context.canvas.width = COLS * BLOCKS;
       context.canvas.height = ROWS * BLOCKS;
@@ -86,7 +164,7 @@
             ],
           },
           {
-            color: "yellow",
+            color: "#f1f118",
             block: [
               [0, 3, 3],
               [3, 3, 0],
@@ -118,7 +196,7 @@
             ],
           },
           {
-            color: "cadetblue",
+            color: "lawngreen",
             block: [
               [0, 7, 0, 0],
               [0, 7, 0, 0],
@@ -128,7 +206,6 @@
           },
         ];
         const randomIndex = Math.floor(Math.random() * object.length);
-        // const randomIndex = Math.floor(0 * blocks.length);
         return object[randomIndex];
       }
       console.log(randomBlockShape());
@@ -144,9 +221,6 @@
         for (let i = 0; i < object.block.length; i++) {
           for (let j = 0; j < object.block[i].length; j++) {
             if (object.block[i][j]) {
-              // console.log("matrix", matrix);
-              // console.log("i", matrix[i][j]);
-              // context.beginPath();
               context.fillStyle = object.color;
               context.fillRect(x + j, y + i, 1, 1);
             }
@@ -159,36 +233,8 @@
         for (let i = 1; i < ground.length - 1; i++) {
           for (let j = 1; j < ground[i].length - 1; j++) {
             if (ground[i][j] !== 0 && ground[i][j] !== 1) {
-              // console.log("object", object);
-              // console.log("object[i][j]", object[i][j]);
-              // console.log("ground[i]", ground[i]);
-              // console.log("ground[j]", ground[j]);
-              // console.log("ground[i][j]", ground[i][j]);
-              context.fillStyle = object.color;
+              context.fillStyle = colorGround[i][j];
               context.fillRect(j - 1, i - 1, 1, 1);
-              // switch (ground[i][j]) {
-              //   case 8:
-              //     context.fillStyle = "blue";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 2:
-              //     context.fillStyle = "red";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 3:
-              //     context.fillStyle = "yellow";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 4:
-              //     context.fillStyle = "green";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 5:
-              //     context.fillStyle = "purple";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 6:
-              //     context.fillStyle = "brown";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              //   case 7:
-              //     context.fillStyle = "cadetblue";
-              //     context.fillRect(j - 1, i - 1, 1, 1);
-              // }
             }
           }
         }
@@ -200,6 +246,7 @@
         let tWidth = canvas.width / scale;
 
         const side = new Array(tWidth + 2).fill(1);
+        colorGround.push(new Array(tWidth + 2).fill("beige"));
         ground.push(side);
         for (let i = 0; i < tHeight; i++) {
           let row = new Array(tWidth).fill(0);
@@ -207,23 +254,28 @@
           row.unshift(1);
 
           ground.push(row);
+          const colorRow = new Array(tWidth).fill("beige");
+          colorRow.push("beige");
+          colorRow.unshift("beige");
+          colorGround.push(colorRow);
         }
         ground.push(side);
+        colorGround.push(new Array(tWidth + 2).fill("beige"));
       }
 
       // 충돌박스
-      function boxColider(player, ground) {
+      function boxCollider(player, ground) {
         for (let i = 0; i < player.object.block.length; i++) {
           for (let j = 0; j < player.object.block[i].length; j++) {
             if (
               player.object.block[i][j] &&
               ground[player.y + i + 1][player.x + j + 1]
             ) {
-              return 1;
+              return true;
             }
           }
         }
-        return 0;
+        return false;
       }
 
       // 회전을 위해서 (x, y) => (y, size - x) size = length -1
@@ -237,7 +289,6 @@
             rotateBlock[j][object.block.length - 1 - i] = object.block[i][j];
           }
         }
-        // console.log(rotateBlock);
         return rotateBlock;
       }
       // 충돌박스 회전할때
@@ -252,7 +303,6 @@
             rotateBlock[j][i] = object.block[i][j];
           }
         }
-        // console.log(rotateBlock);
         return rotateBlock;
       }
 
@@ -263,32 +313,37 @@
       let newShape;
 
       function draw() {
-        context.fillStyle = "#000";
+        context.fillStyle = "lightsteelblue";
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         drawArena(player.object);
         drawMatrix(player.object, player.x, player.y);
       }
 
+      let mode = "";
       function update(time = 0) {
         let animate = requestAnimationFrame(update);
         let stop = cancelAnimationFrame(update);
-
-        count += speed;
-
-        // ground.filter((n) => {
-        //   if (n.length !== 17) {
-        //     console.log("버그발생");
-        //   }
-        // });
         if (
           ground[1]
             .slice(1)
             .slice(0, -1)
             .some((cols) => cols !== 0)
         ) {
+          mode = "gameover";
           return stop;
         }
+        count += speed;
+
+        // if (mode === "gameover") {
+        //   context.beginPath();
+        //   context.fillStyle = "blue";
+        //   context.fillRect(300, 0, 1, 1);
+        //   context.font = "1px Arial";
+        //   context.fillStyle = "red";
+        //   context.fillText("Game Over", 20, 40);
+        // }
+
         if (count >= sec) {
           player.y++;
           count = 0;
@@ -301,29 +356,31 @@
 
         preView(newShape);
 
-        if (boxColider(player, ground)) {
+        if (boxCollider(player, ground)) {
           key = "start";
           addBlock(player.object, player.x, player.y - 1);
           player.object = newShape;
           deleteBlock();
-          if (gameover()) {
-            return 1;
-          }
+          // if (gameover()) {
+          //   return 1;
+          // }
           player.y = 0;
           player.x = 6;
         }
-        // context.beginPath();
-        // context.fillStyle = "#000";
-        // context.fillRect(0, 0, canvas.width, canvas.height);
-
-        // context.strokeStyle = "blue";
       }
 
+      function hardDrop(player) {
+        while (!boxCollider(player, ground)) {
+          player.y++;
+        }
+      }
       // 메인함수
       function main() {
         window.addEventListener("keydown", keyHandler);
+        buttonClickHandler();
         playground();
         key = "start";
+
         update();
       }
 
@@ -340,7 +397,6 @@
         for (let i = 0; i < object.block.length; i++) {
           for (let j = 0; j < object.block[i].length; j++) {
             if (object.block[i][j]) {
-              // newContext.beginPath();
               newContext.fillStyle = object.color;
               newContext.fillRect(i, j, 1, 1);
             }
@@ -348,37 +404,29 @@
         }
       }
       function addBlock(object, x, y) {
-        // console.log("block", block);
         for (let i = 0; i < object.block.length; i++) {
           for (let j = 0; j < object.block[i].length; j++) {
-            // console.log("y+i+1", y + i + 1);
-            // console.log("x+j+1", x + j + 1);
             if (object.block[i][j] > 0) {
               ground[y + i + 1][x + j + 1] = object.block[i][j];
+              colorGround[y + i + 1][x + j + 1] = object.color;
             }
           }
         }
-        // console.log(ground);
       }
 
       // 게임 끝
-      function gameover() {
-        if (
-          ground[1]
-            .slice(1)
-            .slice(0, -1)
-            .some((cols) => cols !== 0)
-        ) {
-          // context.clearRect(0, 0, 0, 0);
-          context.beginPath();
-          context.fillStyle = "blue";
-          context.fillRect(300, 0, 1, 1);
-          context.font = "1px Arial";
-          context.fillStyle = "red";
-          context.fillText("Game Over", 20, 40);
-          alert("게임오버 새로고침 해주세요");
-        }
-      }
+      // function gameover() {
+      //   if (
+      //     ground[1]
+      //       .slice(1)
+      //       .slice(0, -1)
+      //       .some((cols) => cols !== 0)
+      //   ) {
+      //     ;
+      //   } else if () {
+
+      //   }
+      // }
 
       // 블럭삭제
       function deleteBlock() {
@@ -388,8 +436,7 @@
         let lastBlock = ground.filter((rows) => rows.some((n) => n === 0));
         let deleteBlock = ground.filter((rows) => rows.every((n) => n !== 0));
         let deleteNumber = deleteBlock.length - 2;
-        // console.log("deleteNumber", deleteBlock.length - 2);
-        // console.log("deleteBlock", deleteBlock);
+
         if (deleteNumber > 0) {
           // ground.length - 1 => playground 제일 바닥
           ground.splice(ground.length - 1 - deleteNumber, deleteNumber);
@@ -404,16 +451,6 @@
           }
         }
         return ground;
-        // for (let i = 1; i < ground.length - 1; i++) {
-        // }
-
-        // console.log("ground", ground);
-        // ground.forEach((row) => {
-        //   console.log(row.every((n) => n !== 0));
-        //   if (row.every((n) => n !== 0)) {
-        //     console.log("꽉찼다!");
-        //   }
-        // });
       }
 
       function keyHandler(e) {
@@ -430,15 +467,11 @@
 
         switch (inputKey) {
           case KEY.SPACE:
-            // for (let i = 0; i < ground.length; i++) {
-            //   for (let j = 0; j < ground[i].length; j++) {
-            //     ground[]
-            //   }
-            // }
+            hardDrop(player);
             break;
           case KEY.UP:
             player.object.block = rotate(player.object);
-            if (boxColider(player, ground)) {
+            if (boxCollider(player, ground)) {
               player.object.block = nonRotate(player.object);
             }
             break;
@@ -448,19 +481,51 @@
             break;
           case KEY.LEFT:
             player.x--;
-            if (boxColider(player, ground)) {
+            if (boxCollider(player, ground)) {
               player.x++;
             }
             break;
           case KEY.RIGHT:
             player.x++;
-            if (boxColider(player, ground)) {
+            if (boxCollider(player, ground)) {
               player.x--;
             }
             break;
         }
       }
 
+      function buttonClickHandler() {
+        const upBtn = document.querySelector(".upBtn");
+        const downBtn = document.querySelector(".downBtn");
+        const leftBtn = document.querySelector(".leftBtn");
+        const rightBtn = document.querySelector(".rightBtn");
+        const spaceBtn = document.querySelector(".spaceBtn");
+
+        upBtn.addEventListener("click", () => {
+          player.object.block = rotate(player.object);
+          if (boxCollider(player, ground)) {
+            player.object.block = nonRotate(player.object);
+          }
+        });
+        downBtn.addEventListener("click", () => {
+          player.y++;
+        });
+        leftBtn.addEventListener("click", () => {
+          player.x--;
+          if (boxCollider(player, ground)) {
+            player.x++;
+          }
+        });
+        rightBtn.addEventListener("click", () => {
+          player.x++;
+          if (boxCollider(player, ground)) {
+            player.x--;
+          }
+        });
+        spaceBtn.addEventListener("click", () => {
+          hardDrop(player);
+        });
+      }
       main();
     </script>
   </body>
