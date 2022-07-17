@@ -216,6 +216,7 @@
         object: randomBlockShape(),
       };
       const area = {};
+
       // 블럭그리기
       function drawMatrix(object, x, y) {
         for (let i = 0; i < object.block.length; i++) {
@@ -331,7 +332,8 @@
             .some((cols) => cols !== 0)
         ) {
           mode = "gameover";
-          return stop;
+          stop;
+          alert("GameOver 새로고침 해주세요");
         }
         count += speed;
 
@@ -376,7 +378,7 @@
       }
       // 메인함수
       function main() {
-        window.addEventListener("keydown", keyHandler);
+        window.addEventListener("keydown", pressBtnHandler);
         buttonClickHandler();
         playground();
         key = "start";
@@ -453,7 +455,8 @@
         return ground;
       }
 
-      function keyHandler(e) {
+      // pressBtn 핸들러
+      function pressBtnHandler(e) {
         // console.log(e);
         const inputKey = e.keyCode;
 
@@ -494,6 +497,7 @@
         }
       }
 
+      // Click 핸들러
       function buttonClickHandler() {
         const upBtn = document.querySelector(".upBtn");
         const downBtn = document.querySelector(".downBtn");
